@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HydroSphere 3D — Interactive Water Cycle Model (Florida Grade 5 Science)</title>
+    <meta
+      name="description"
+      content="Hyper-realistic 3D interactive model of the Water Cycle featuring coastal mountains, reflective ocean, evaporation, condensation, rainfall/snow/sleet/hail, and river runoff aligned to Florida 5th Grade Science Standards (SC.5.E.7.1 - SC.5.E.7.4)."
+    />
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body>
+    <!-- Full-Screen 3D WebGL Landscape (Main Focal Point) -->
+    <main id="viewport-container" aria-label="3D Interactive Water Cycle Simulation">
+      <canvas id="webgl-canvas"></canvas>
+    </main>
+
+    <!-- 3D Projected Interactive Stage Pins -->
+    <div id="labels-layer" aria-live="polite"></div>
+
+    <!-- Sleek Dark Top Header HUD -->
+    <header id="top-hud">
+      <div class="brand-cluster">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>HydroSphere 3D</h1>
+          <div class="brand-subtitle">Florida 5th Grade Water Cycle Lab · SC.5.E.7.1–7.4</div>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Readouts -->
+      <div class="telemetry-strip" aria-label="Live Water Cycle Rates">
+        <div class="metric-chip" title="Ocean & surface evaporation rate">
+          <span class="metric-chip-label">Evaporation</span>
+          <span id="hud-evap-val" class="metric-chip-val amber">4.8 L/m²/h</span>
+        </div>
+        <div class="metric-chip" title="Condensed moisture in clouds">
+          <span class="metric-chip-label">Condensation</span>
+          <span id="hud-cloud-val" class="metric-chip-val">56% Clouds</span>
+        </div>
+        <div class="metric-chip" title="Current precipitation form and intensity">
+          <span class="metric-chip-label">Precipitation</span>
+          <span id="hud-precip-val" class="metric-chip-val cyan">Rain · 14.2 mm/h</span>
+        </div>
+        <div class="metric-chip" title="River surface runoff flowing back to the ocean">
+          <span class="metric-chip-label">Runoff</span>
+          <span id="hud-runoff-val" class="metric-chip-val teal">42.0 m³/s</span>
+        </div>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <nav class="header-actions" aria-label="Simulation Tools">
+        <button id="btn-instructions" class="hud-btn" type="button" title="How to use this simulation and FL Grade 5 Standards">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>How to Use</span>
+        </button>
+
+        <button id="btn-datasheet" class="hud-btn primary" type="button" title="Open Student Lab Data Sheet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+          </svg>
+          <span>Data Sheet</span>
+          <span id="trial-count-badge" class="trial-badge">0</span>
+        </button>
+
+        <button id="btn-focus-mode" class="hud-btn" type="button" title="Hide side panels to focus 100% on the 3D world">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+          <span id="focus-mode-label">Focus 3D</span>
+        </button>
+
+        <button id="btn-reset-all" class="hud-btn reset-btn" type="button" title="Reset weather controls, camera, water cycle, and data sheet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>Reset All</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Left Collapsible Student Weather Controls Panel -->
+    <aside id="controls-dock" aria-label="Weather and Water Cycle Controls">
+      <div class="dock-header">
+        <span class="dock-title">Weather Controls</span>
+        <button id="btn-collapse-dock" class="icon-btn" type="button" title="Collapse or expand controls">
+          <svg id="dock-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <div class="dock-body">
+        <!-- 1. Sunlight / Solar Energy -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="slider-sunlight" class="control-label">Sunlight (Solar Energy)</label>
+            <span id="val-sunlight" class="control-readout amber">72%</span>
+          </div>
+          <input
+            id="slider-sunlight"
+            class="sleek-slider amber-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value="72"
+          />
+          <div class="scale-ticks">
+            <span>0% Night</span>
+            <span>50% Partly Sunny</span>
+            <span>100% Intense</span>
+          </div>
+          <p class="control-hint">The Sun's heat turns liquid ocean water into water vapor (gas).</p>
+        </div>
+
+        <!-- 2. Air Temperature (°C / °F) -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="slider-temp" class="control-label">Air Temperature</label>
+            <span id="val-temp" class="control-readout">27°C (81°F)</span>
+          </div>
+          <input
+            id="slider-temp"
+            class="sleek-slider"
+            type="range"
+            min="-6"
+            max="38"
+            step="1"
+            value="27"
+          />
+          <div class="scale-ticks">
+            <span>-6°C Freeze</span>
+            <span>0°C (32°F)</span>
+            <span>38°C Hot</span>
+          </div>
+          <p class="control-hint">Controls evaporation speed and whether rain freezes into snow or sleet.</p>
+        </div>
+
+        <!-- 3. Onshore Wind Speed -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="slider-wind" class="control-label">Sea Breeze Wind</label>
+            <span id="val-wind" class="control-readout">18 km/h</span>
+          </div>
+          <input
+            id="slider-wind"
+            class="sleek-slider"
+            type="range"
+            min="0"
+            max="45"
+            step="1"
+            value="18"
+          />
+          <div class="scale-ticks">
+            <span>0 Calm</span>
+            <span>20 Breeze</span>
+            <span>45 Strong</span>
+          </div>
+          <p class="control-hint">Pushes moist ocean air inland up the cool mountain slopes.</p>
+        </div>
+
+        <!-- 4. Thunderstorm Updrafts (SC.5.E.7.4 Hail Formation) -->
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <span class="toggle-title">Strong Storm Updrafts</span>
+            <span class="toggle-sub">Tosses raindrops high into freezing cloud tops (Hail)</span>
+          </div>
+          <input id="toggle-updrafts" class="switch-input" type="checkbox" />
+        </div>
+
+        <!-- 5. Quick Florida Science Scenarios -->
+        <div class="section-divider">
+          <div class="sub-heading">Test Weather Scenarios</div>
+          <div class="preset-grid">
+            <button class="preset-btn active" type="button" data-preset="floridaSunny">Sunny Coast</button>
+            <button class="preset-btn" type="button" data-preset="cloudyCool">Cloudy &amp; Mild</button>
+            <button class="preset-btn" type="button" data-preset="winterFreeze">Mountain Snow</button>
+            <button class="preset-btn" type="button" data-preset="sleetMix">Freezing Sleet</button>
+            <button class="preset-btn full-span" type="button" data-preset="summerHail">
+              Thunderstorm Updraft (Hail)
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. 3D Visual Overlays & Sim Speed -->
+        <div class="section-divider">
+          <div class="sub-heading">3D Overlays &amp; Speed</div>
+          <div class="mini-options" style="margin-bottom: 6px;">
+            <button id="btn-toggle-arrows" class="chip-toggle active" type="button">Cycle Arrows</button>
+            <button id="btn-toggle-labels" class="chip-toggle active" type="button">3D Stage Pins</button>
+          </div>
+          <div class="mini-options">
+            <button class="chip-toggle speed-btn" type="button" data-speed="0">Pause</button>
+            <button class="chip-toggle speed-btn active" type="button" data-speed="1">1x Live</button>
+            <button class="chip-toggle speed-btn" type="button" data-speed="2">2x Fast</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Floating Stage Science Inspector Card -->
+    <section id="inspector-card" aria-label="Selected Water Cycle Stage Explanation">
+      <div class="inspector-top">
+        <span id="insp-tag" class="stage-tag">Stage 1 · SC.5.E.7.1 &amp; 7.2</span>
+        <button id="btn-close-inspector" class="icon-btn" type="button" title="Hide card">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <h2 id="insp-title" class="inspector-title">Evaporation from the Ocean</h2>
+      <div class="state-pill-row">
+        <span>Water State:</span>
+        <span id="insp-state" class="state-badge">Liquid → Gas (Water Vapor)</span>
+      </div>
+      <p id="insp-desc" class="inspector-desc">
+        Holding 97% of Earth's water, the ocean is the main source of the water cycle. Heat energy from sunlight warms surface water so it evaporates into invisible water vapor gas, leaving ocean salt behind!
+      </p>
+      <div id="insp-live-note" class="live-observation-box">
+        Solar energy evaporates liquid ocean water into water vapor, which cools into clouds and cycles back to Earth's reservoirs.
+      </div>
+    </section>
+
+    <!-- Bottom Camera View Switcher & One-Click Record Trial -->
+    <div id="bottom-hud" role="toolbar" aria-label="3D Camera Angles and Trial Recorder">
+      <button class="cam-btn active" type="button" data-cam="overview">Full Cycle Overview</button>
+      <button class="cam-btn" type="button" data-cam="evaporation">1. Ocean Evaporation</button>
+      <button class="cam-btn" type="button" data-cam="condensation">2. Mountain Clouds</button>
+      <button class="cam-btn" type="button" data-cam="precipitation">3. Precipitation</button>
+      <button class="cam-btn" type="button" data-cam="runoff">4. River Runoff</button>
+      <div class="hud-sep" aria-hidden="true"></div>
+      <button id="btn-quick-record" class="hud-btn primary" type="button" title="Save current measurements as a new trial in your Data Sheet">
+        + Log Trial
+      </button>
+    </div>
+
+    <!-- Instructions & Florida Grade 5 Standards Modal -->
+    <div id="modal-instructions" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="inst-modal-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="inst-modal-title">Student Guide &amp; Florida 5th Grade Science Alignment</h2>
+          <button id="btn-close-instructions" class="icon-btn" type="button" aria-label="Close instructions">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-tabs">
+          <button class="tab-btn active" type="button" data-tab="tab-howto">How to Use the 3D Lab</button>
+          <button class="tab-btn" type="button" data-tab="tab-standards">Florida 5th Grade Need-to-Know</button>
+        </div>
+
+        <div id="tab-howto" class="modal-body">
+          <div class="guide-grid">
+            <div class="guide-card">
+              <h3>1. Explore the 3D World</h3>
+              <p>
+                <strong>Left-click + drag</strong> to rotate around the mountain and ocean landscape.
+                <strong>Scroll</strong> to zoom in close to the waterfall or clouds, and <strong>Right-click + drag</strong> to pan. Use the bottom camera buttons or click any <strong>3D Stage Pin</strong> to jump straight to a process.
+              </p>
+            </div>
+            <div class="guide-card">
+              <h3>2. Change Weather Variables</h3>
+              <p>
+                Use the left <strong>Weather Controls</strong> panel to adjust <strong>Sunlight</strong>, <strong>Air Temperature (°C / °F)</strong>, <strong>Sea Breeze Wind</strong>, and <strong>Storm Updrafts</strong>. Watch how the ocean mist, clouds, snowpack, and river respond in real time!
+              </p>
+            </div>
+            <div class="guide-card">
+              <h3>3. Observe Water's 3 States</h3>
+              <p>
+                Track water changing between <strong>Liquid</strong> (ocean, rain, cloud droplets, river), <strong>Gas</strong> (rising water vapor), and <strong>Solid</strong> (snow below 0°C, sleet near freezing, and hail in strong storm updrafts).
+              </p>
+            </div>
+            <div class="guide-card">
+              <h3>4. Collect Lab Data &amp; Reset</h3>
+              <p>
+                Click <strong>+ Log Trial</strong> or open the <strong>Data Sheet</strong> to record experiments, compare rates, answer 5th-grade lab questions, and print or export CSV. Click <strong>Reset All</strong> anytime to start fresh.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-standards" class="modal-body" style="display: none;">
+          <div class="standards-list">
+            <div class="standard-item">
+              <div class="standard-code">SC.5.E.7.1 — Parts of the Water Cycle &amp; States of Matter</div>
+              <p>
+                Water moves continuously through <strong>Evaporation</strong> (liquid to gas powered by the Sun), <strong>Condensation</strong> (cooling gas to liquid cloud droplets or ice crystals), <strong>Precipitation</strong>, and <strong>Surface Runoff</strong>. Water changes back and forth among <strong>gas, liquid, and solid</strong>.
+              </p>
+            </div>
+            <div class="standard-item">
+              <div class="standard-code">SC.5.E.7.2 — Role of the Ocean</div>
+              <p>
+                Holding about <strong>97% of Earth's water</strong>, the ocean is connected to all freshwater reservoirs (lakes, rivers, mountain ice) through evaporation and precipitation. When ocean water evaporates, salt stays behind so rainwater is fresh!
+              </p>
+            </div>
+            <div class="standard-item">
+              <div class="standard-code">SC.5.E.7.3 &amp; SC.5.E.7.4 — Weather Factors &amp; 4 Forms of Precipitation</div>
+              <p>
+                Air temperature, humidity, and wind determine local weather and distinguish the four tested forms of precipitation: <strong>Rain</strong> (liquid drops above freezing), <strong>Snow</strong> (solid ice crystals falling through freezing air), <strong>Sleet</strong> (raindrops freezing into ice pellets in a cold air layer near the ground), and <strong>Hail</strong> (layered ice balls formed by strong thunderstorm updrafts).
+              </p>
+            </div>
+            <div class="standard-item">
+              <div class="standard-code">Florida Statewide Science Assessment Scope &amp; Limits</div>
+              <p>
+                Per official FLDOE Grade 5 Test Item Specifications, this simulation stays strictly focused on tested 5th-grade benchmarks—using <strong>°C</strong> (with °F reference) and deliberately excluding untested processes such as <em>transpiration, infiltration, percolation,</em> or molecular kinetic equations.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Investigation Data Sheet Modal -->
+    <div id="modal-datasheet" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ds-modal-title">
+      <div class="modal-panel wide">
+        <div class="modal-header">
+          <h2 id="ds-modal-title">5th Grade Science Investigation — Water Cycle Data Sheet</h2>
+          <button id="btn-close-datasheet" class="icon-btn" type="button" aria-label="Close data sheet">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="datasheet-toolbar datasheet-actions-bar">
+            <div id="ds-live-readout" class="live-snapshot-text">
+              Current Conditions: Sunlight 72% · Temp 27°C (81°F) · Wind 18 km/h · Precip: Rain
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btn-record-trial" class="hud-btn primary" type="button">+ Record Current Trial</button>
+              <button id="btn-export-csv" class="hud-btn" type="button">Export CSV</button>
+              <button id="btn-print-sheet" class="hud-btn" type="button">Print Sheet</button>
+              <button id="btn-clear-trials" class="hud-btn reset-btn" type="button">Clear Table</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="lab-table">
+              <thead>
+                <tr>
+                  <th>Trial</th>
+                  <th>Sunlight</th>
+                  <th>Air Temp</th>
+                  <th>Wind</th>
+                  <th>Evaporation</th>
+                  <th>Clouds</th>
+                  <th>Precipitation</th>
+                  <th>Runoff Flow</th>
+                  <th>Water States</th>
+                  <th class="datasheet-actions-bar"></th>
+                </tr>
+              </thead>
+              <tbody id="trials-tbody">
+                <tr class="empty-row">
+                  <td colspan="10">
+                    No trials logged yet. Change Sunlight or Air Temperature and click <strong>+ Record Current Trial</strong> to compare results!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="sub-heading" style="margin-bottom: 8px;">Lab Analysis Questions (SC.5.E.7.1 – SC.5.E.7.4)</div>
+            <div class="questions-grid">
+              <div class="question-box">
+                <label for="lab-q1">1. Solar Energy &amp; Ocean Evaporation: What happened to evaporation and clouds when you lowered Sunlight vs. raised it?</label>
+                <textarea id="lab-q1" placeholder="Write your observation from your recorded trials..."></textarea>
+              </div>
+              <div class="question-box">
+                <label for="lab-q2">2. States of Water &amp; Precipitation: Which settings caused liquid Rain to change into solid Snow, Sleet, or Hail?</label>
+                <textarea id="lab-q2" placeholder="Compare air temperature (°C) and storm updrafts..."></textarea>
+              </div>
+              <div class="question-box">
+                <label for="lab-q3">3. Connecting Reservoirs: How does water from the salty Ocean become fresh water in the Mountain River and return?</label>
+                <textarea id="lab-q3" placeholder="Trace the 4 stages of the cycle..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subtle Feedback Toast -->
+    <div id="toast-banner" class="hidden" role="status" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
