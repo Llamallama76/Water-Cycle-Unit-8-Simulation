@@ -64,6 +64,16 @@ export function createHudController({ sim, camera, setCameraPreset }) {
   const valTemp = document.getElementById('val-temp');
   const valWind = document.getElementById('val-wind');
 
+  // Stage Display Visibility (Classroom Teacher Boost)
+  const sliderVisEvap = document.getElementById('slider-vis-evap');
+  const sliderVisRain = document.getElementById('slider-vis-rain');
+  const sliderVisRunoff = document.getElementById('slider-vis-runoff');
+  const valVisEvap = document.getElementById('val-vis-evap');
+  const valVisRain = document.getElementById('val-vis-rain');
+  const valVisRunoff = document.getElementById('val-vis-runoff');
+  const btnVisReset = document.getElementById('btn-vis-reset');
+  const spotlightBtns = Array.from(document.querySelectorAll('.spotlight-chip'));
+
   const controlsDock = document.getElementById('controls-dock');
   const btnCollapseDock = document.getElementById('btn-collapse-dock');
   const dockChevron = document.getElementById('dock-chevron');
@@ -213,6 +223,20 @@ export function createHudController({ sim, camera, setCameraPreset }) {
     presetBtns.forEach((b) => b.classList.remove('active'));
   }
 
+  function clearActiveSpotlightButtons() {
+    spotlightBtns.forEach((b) => b.classList.remove('active'));
+  }
+
+  function syncVisibilityControls() {
+    const p = sim.params;
+    sliderVisEvap.value = String(p.evapVisibility);
+    sliderVisRain.value = String(p.rainVisibility);
+    sliderVisRunoff.value = String(p.runoffVisibility);
+    valVisEvap.textContent = `${p.evapVisibility}%`;
+    valVisRain.textContent = `${p.rainVisibility}%`;
+    valVisRunoff.textContent = `${p.runoffVisibility}%`;
+  }
+
   function syncControlsFromSim() {
     const p = sim.params;
     sliderSunlight.value = String(p.sunlight);
@@ -224,6 +248,11 @@ export function createHudController({ sim, camera, setCameraPreset }) {
     valTemp.textContent = `${p.airTempC}°C (${celsiusToFahrenheit(p.airTempC)}°F)`;
     valWind.textContent = `${p.windSpeed} km/h`;
 
+    syncVisibilityControls();
+    if (p.evapVisibility === 100 && p.rainVisibility === 100 && p.runoffVisibility === 100) {
+      clearActiveSpotlightButtons();
+    }
+
     btnToggleArrows.classList.toggle('active', p.showFlowArrows);
     btnToggleLabels.classList.toggle('active', p.showLabels);
     labelsLayer.style.display = p.showLabels ? 'block' : 'none';
@@ -233,7 +262,7 @@ export function createHudController({ sim, camera, setCameraPreset }) {
     });
   }
 
-  // Wire Sliders
+  // Wire Weather Sliders
   sliderSunlight.addEventListener('input', () => {
     sim.params.sunlight = Number(sliderSunlight.value);
     valSunlight.textContent = `${sim.params.sunlight}%`;
@@ -259,6 +288,84 @@ export function createHudController({ sim, camera, setCameraPreset }) {
       selectStage('precipitation', false);
       showToast('Storm updrafts enabled: watch raindrops freeze into solid Hail!');
     }
+  });
+
+  // Wire Stage Display Visibility Sliders & Classroom Spotlights
+  sliderVisEvap.addEventListener('input', () => {
+    sim.params.evapVisibility = Number(sliderVisEvap.value);
+    valVisEvap.textContent = `${sim.params.evapVisibility}%`;
+    clearActiveSpotlightButtons();
+  });
+
+  sliderVisRain.addEventListener('input', () => {
+    sim.params.rainVisibility = Number(sliderVisRain.value);
+    valVisRain.textContent = `${sim.params.rainVisibility}%`;
+    clearActiveSpotlightButtons();
+  });
+
+  sliderVisRunoff.addEventListener('input', () => {
+    sim.params.runoffVisibility = Number(sliderVisRunoff.value);
+    valVisRunoff.textContent = `${sim.params.runoffVisibility}%`;
+    clearActiveSpotlightButtons();
+  });
+
+  btnVisReset.addEventListener('click', () => {
+    sim.params.evapVisibility = 100;
+    sim.params.rainVisibility = 100;
+    sim.params.runoffVisibility = 100;
+    syncVisibilityControls();
+    clearActiveSpotlightButtons();
+    showToast('Stage display visibility restored to 100% default.');
+  });
+
+  spotlightBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.spotlight;
+      const alreadyActive = btn.classList.contains('active');
+      if (alreadyActive) {
+        sim.params.evapVisibility = 100;
+        sim.params.rainVisibility = 100;
+        sim.params.runoffVisibility = 100;
+        syncVisibilityControls();
+        clearActiveSpotlightButtons();
+        showToast('Display spotlight turned off (100% standard visibility).');
+        return;
+      }
+
+      if (mode === 'evap') {
+        sim.params.evapVisibility = 225;
+        sim.params.rainVisibility = 85;
+        sim.params.runoffVisibility = 85;
+        selectStage('evaporation', false);
+        showToast('Spotlight: Ocean Evaporation boosted to 225%!');
+      } else if (mode === 'rain') {
+        sim.params.evapVisibility = 85;
+        sim.params.rainVisibility = 225;
+        sim.params.runoffVisibility = 110;
+        selectStage('precipitation', false);
+        if (sim.metrics.precipitationType !== 'Rain') {
+          showToast(
+            `Rainfall boosted to 225% (currently falling as ${sim.metrics.precipitationType} — warm air above 2°C without updrafts for liquid Rain).`
+          );
+        } else {
+          showToast('Spotlight: Rainfall & Rain Curtains boosted to 225%!');
+        }
+      } else if (mode === 'runoff') {
+        sim.params.evapVisibility = 85;
+        sim.params.rainVisibility = 100;
+        sim.params.runoffVisibility = 225;
+        selectStage('runoff', false);
+        showToast('Spotlight: Mountainside & River Runoff boosted to 225%!');
+      } else if (mode === 'all') {
+        sim.params.evapVisibility = 200;
+        sim.params.rainVisibility = 200;
+        sim.params.runoffVisibility = 200;
+        showToast('Classroom Boost: Evaporation, Rainfall, and Runoff set to 200%!');
+      }
+
+      syncVisibilityControls();
+      spotlightBtns.forEach((b) => b.classList.toggle('active', b === btn));
+    });
   });
 
   // Scenario Presets

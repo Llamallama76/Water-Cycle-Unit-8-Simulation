@@ -184,7 +184,81 @@
           <input id="toggle-updrafts" class="switch-input" type="checkbox" />
         </div>
 
-        <!-- 5. Quick Florida Science Scenarios -->
+        <!-- 5. Stage Visibility (Classroom Display Boost) -->
+        <div class="section-divider">
+          <div class="sub-heading-row">
+            <span class="sub-heading" style="margin-bottom: 0;">Stage Display Visibility</span>
+            <button id="btn-vis-reset" class="mini-link-btn" type="button" title="Reset display visibility sliders to 100%">100% Default</button>
+          </div>
+          <p class="control-hint" style="margin-bottom: 8px;">
+            Adjust or spotlight stages on screen while presenting to students:
+          </p>
+
+          <div class="vis-slider-stack">
+            <div class="vis-control-row">
+              <div class="control-header">
+                <label for="slider-vis-evap" class="control-label">
+                  <span class="pin-dot amber"></span>Evaporation Vapor
+                </label>
+                <span id="val-vis-evap" class="control-readout amber">100%</span>
+              </div>
+              <input
+                id="slider-vis-evap"
+                class="sleek-slider amber-slider"
+                type="range"
+                min="25"
+                max="250"
+                step="5"
+                value="100"
+              />
+            </div>
+
+            <div class="vis-control-row">
+              <div class="control-header">
+                <label for="slider-vis-rain" class="control-label">
+                  <span class="pin-dot cyan"></span>Rainfall &amp; Curtains
+                </label>
+                <span id="val-vis-rain" class="control-readout">100%</span>
+              </div>
+              <input
+                id="slider-vis-rain"
+                class="sleek-slider"
+                type="range"
+                min="25"
+                max="250"
+                step="5"
+                value="100"
+              />
+            </div>
+
+            <div class="vis-control-row">
+              <div class="control-header">
+                <label for="slider-vis-runoff" class="control-label">
+                  <span class="pin-dot teal"></span>Runoff Water Flow
+                </label>
+                <span id="val-vis-runoff" class="control-readout teal">100%</span>
+              </div>
+              <input
+                id="slider-vis-runoff"
+                class="sleek-slider teal-slider"
+                type="range"
+                min="25"
+                max="250"
+                step="5"
+                value="100"
+              />
+            </div>
+          </div>
+
+          <div class="spotlight-bar" role="group" aria-label="Quick Stage Display Spotlight">
+            <button class="spotlight-chip" type="button" data-spotlight="evap" title="Boost Evaporation visibility to 220%">Spotlight Evap</button>
+            <button class="spotlight-chip" type="button" data-spotlight="rain" title="Boost Rainfall visibility to 220%">Spotlight Rain</button>
+            <button class="spotlight-chip" type="button" data-spotlight="runoff" title="Boost Runoff visibility to 220%">Spotlight Runoff</button>
+            <button class="spotlight-chip" type="button" data-spotlight="all" title="Boost Evaporation, Rain, and Runoff to 200%">Boost All 200%</button>
+          </div>
+        </div>
+
+        <!-- 6. Quick Florida Science Scenarios -->
         <div class="section-divider">
           <div class="sub-heading">Test Weather Scenarios</div>
           <div class="preset-grid">
@@ -198,7 +272,7 @@
           </div>
         </div>
 
-        <!-- 6. 3D Visual Overlays & Sim Speed -->
+        <!-- 7. 3D Visual Overlays & Sim Speed -->
         <div class="section-divider">
           <div class="sub-heading">3D Overlays &amp; Speed</div>
           <div class="mini-options" style="margin-bottom: 6px;">
@@ -279,9 +353,9 @@
               </p>
             </div>
             <div class="guide-card">
-              <h3>2. Change Weather Variables</h3>
+              <h3>2. Change Weather &amp; Stage Visibility</h3>
               <p>
-                Use the left <strong>Weather Controls</strong> panel to adjust <strong>Sunlight</strong>, <strong>Air Temperature (°C / °F)</strong>, <strong>Sea Breeze Wind</strong>, and <strong>Storm Updrafts</strong>. Watch how the ocean mist, clouds, snowpack, and river respond in real time!
+                Use the left <strong>Weather Controls</strong> panel to adjust <strong>Sunlight</strong>, <strong>Air Temperature (°C / °F)</strong>, <strong>Sea Breeze Wind</strong>, and <strong>Storm Updrafts</strong>. Use <strong>Stage Display Visibility</strong> sliders or <strong>Spotlight</strong> buttons to boost Evaporation, Rainfall, or Runoff flow during classroom demonstrations!
               </p>
             </div>
             <div class="guide-card">

@@ -157,18 +157,20 @@ export function getTerrainHeight(x, z) {
     h = h * (1 - basinBlend) + lakeBedY * basinBlend;
   }
 
-  // Carve Wide, Crystal-Clear River Canyon & Estuary Delta from x = -36 to x = +24
-  if (x > -37 && x < 25) {
+  // Carve Wide, Crystal-Clear River Valley & Estuary Delta from x = -36 to x = +26
+  if (x > -37 && x < 26) {
     const rz = getRiverCenterZ(x);
-    const dz = Math.abs(z - rz);
-    const halfWidth = x < -21 ? 2.9 : 3.2 + smoothstep(-21, 16, x) * 5.0;
-    const bankSpan = halfWidth * 2.8;
+    const dzSigned = z - rz;
+    const dz = Math.abs(dzSigned);
+    const halfWidth = x < -21 ? 3.8 : 4.3 + smoothstep(-21, 16, x) * 6.0;
+    // Open the front-facing (z > rz) valley slope slightly wider so the river is never hidden behind a ridge
+    const bankSpan = dzSigned > 0 ? halfWidth * 3.4 : halfWidth * 2.7;
 
     if (dz < bankSpan) {
       const riverWaterY = getRiverProfileY(x);
-      const bedY = riverWaterY - (1.2 + smoothstep(-20, 15, x) * 0.55);
-      const channelBlend = 1.0 - smoothstep(halfWidth * 0.5, bankSpan, dz);
-      const carved = Math.min(h, bedY + (1 - channelBlend) * 3.4);
+      const bedY = riverWaterY - (1.05 + smoothstep(-20, 15, x) * 0.5);
+      const channelBlend = 1.0 - smoothstep(halfWidth * 0.58, bankSpan, dz);
+      const carved = Math.min(h, bedY + (1 - channelBlend) * 3.0);
       h = h * (1 - channelBlend) + carved * channelBlend;
     }
   }
